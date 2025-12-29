@@ -1,0 +1,26 @@
+{
+    "mes_referencia": "2025-12",
+    "indicadores": {
+        "UF": 39693.42,
+        "UTM": 69542
+    },
+    "parametros": {
+        "sueldo_minimo": 529000.0,
+        "factor_tope_afp": 87.8,
+        "factor_tope_cesantia": 131.9,
+        "factor_gratificacion_legal": 4.75,
+        "tasa_sis": 1.49,
+        "sanna": 0.03,
+        "mutual": 0.9,
+        "tasa_expectativa_vida": 0.9,
+        "tasa_capitalizacion_individual": 0.1
+    },
+    "defaults_simulacion": {
+        "afp_tasa": 11.45,
+        "salud_tasa": 7.0,
+        "es_indefinido": true,
+        "apv": 0,
+        "isapre_uf": 0.0,
+        "incluir_bono": false
+    }
+}

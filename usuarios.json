@@ -1,0 +1,15 @@
+{
+    "credentials": {
+        "usernames": {
+            "admin": {
+                "name": "Administrador",
+                "password": "admin"
+            }
+        }
+    },
+    "cookie": {
+        "name": "rrhh_cookie",
+        "key": "clave_secreta_cualquiera",
+        "expiry_days": 1
+    }
+}
