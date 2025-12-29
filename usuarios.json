@@ -3,13 +3,20 @@
         "usernames": {
             "admin": {
                 "name": "Administrador",
-                "password": "admin"
+                "password": "$2b$12$YtQWmEAPaV0h6ss7.Y2OaOklOjojUqVMN/njj6EO.Xg8Jna86y6rW"
+            },
+            "visita": {
+                "name": "Usuario Invitado",
+                "password": "$2b$12$qTey7a5On/TGS7/CFuOZgOwdTUsJi52gpkuSyznVD0wgDqgNZB9oq"
             }
         }
     },
     "cookie": {
         "name": "rrhh_cookie",
-        "key": "clave_secreta_cualquiera",
-        "expiry_days": 1
+        "key": "clave_secreta_rrhh",
+        "expiry_days": 30
+    },
+    "preauthorized": {
+        "emails": []
     }
 }
