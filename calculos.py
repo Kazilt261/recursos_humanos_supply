@@ -6,7 +6,17 @@ from utils import redondear_excel
 
 class GestorParametros:
     def __init__(self):
-        self.archivo_db = "parametros_rrhh.json"
+        data_dir = os.getenv("DATA_DIR", ".")
+        self.archivo_db = os.path.join(data_dir, "parametros_rrhh.json")
+        if not os.path.exists(self.archivo_db):
+            os.makedirs(os.path.dirname(self.archivo_db), exist_ok=True)
+            try:
+                with open("parametros_rrhh.json", "r", encoding="utf-8") as src:
+                    seed = src.read()
+                with open(self.archivo_db, "w", encoding="utf-8") as dst:
+                    dst.write(seed)
+            except FileNotFoundError:
+                pass
         self.api_url = "https://mindicador.cl/api"
         self.datos_base = {
             "mes_referencia": "",
