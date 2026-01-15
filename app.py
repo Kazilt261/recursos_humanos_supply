@@ -272,9 +272,10 @@ with tabs[1]:
         
         cols_orden = [
             "Rol","Nombre", "Tipo Contrato", "Sueldo bruto", "Gratificación", "Bonos Imp.", "Colación", "Movilización", "TOTAL HABERES",
-            "AFP", "Salud Total", "Impuesto Único", "SUELDO LÍQUIDO",
-            "SIS", "Mutual", "Ley SANNA", "Seguro Cesantía (Empresa)", 
+            "AFP", "Salud Total", "Impuesto Único", "SUELDO LÍQUIDO","Aporte Patronal Total","aporte adicional",
+            "SIS", "Mutual", "Ley SANNA", "Seguro Cesantía trab","Seguro Cesantía emp", 
             "Provisión Vacaciones", "Provisión Indemnización", "Provisión Bono Anual",
+            ""
             "COSTO FINANCIERO SERVICIO sin ind","Costo financiero", "Costo Admin", "Costo Mgmt", "COSTO FINANCIERO TOTAL"
         ]
         

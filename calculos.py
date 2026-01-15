@@ -6,17 +6,7 @@ from utils import redondear_excel
 
 class GestorParametros:
     def __init__(self):
-        data_dir = os.getenv("DATA_DIR", ".")
-        self.archivo_db = os.path.join(data_dir, "parametros_rrhh.json")
-        if not os.path.exists(self.archivo_db):
-            os.makedirs(os.path.dirname(self.archivo_db), exist_ok=True)
-            try:
-                with open("parametros_rrhh.json", "r", encoding="utf-8") as src:
-                    seed = src.read()
-                with open(self.archivo_db, "w", encoding="utf-8") as dst:
-                    dst.write(seed)
-            except FileNotFoundError:
-                pass
+        self.archivo_db = "parametros_rrhh.json"
         self.api_url = "https://mindicador.cl/api"
         self.datos_base = {
             "mes_referencia": "",
@@ -150,11 +140,13 @@ class CalculadoraCostos:
             "TOTAL HABERES": total_haberes,
             "AFP": monto_afp,
             "Salud Total": salud_total,
-            "Seguro Cesantía": seg_ces_trab,
+            "Seguro Cesantía trab": seg_ces_trab,
+            "Seguro Cesantía emp":seg_ces_emp,
             "Impuesto Único": imp_unico,
             "Total Descuentos": total_desc,
             "SUELDO LÍQUIDO": sueldo_liq,
             "Aporte Patronal Total": aporte_pat,
+            "aporte adicional": aporte_adic,
             "Ley SANNA": c_san, "Mutual": c_mut, "SIS": c_sis, "Seguro Cesantía (Empresa)": seg_ces_emp,
             "Provisión Vacaciones": prov_vac,
             "Provisión Indemnización": prov_ind,
