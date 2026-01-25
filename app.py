@@ -130,12 +130,23 @@ with tabs[0]:
         st.subheader("Resultado")
         with st.container(border=True):
             m1, m2, m3, m4 = st.columns(4)
-            m1.metric("Bruto", f"${res['Sueldo bruto']:,.0f}")
-            m2.metric("Líquido", f"${res['SUELDO LÍQUIDO']:,.0f}", delta="Objetivo" if tipo_calculo=="Sueldo Líquido" else None)
-            m3.metric("Tot. Haberes", f"${res['TOTAL HABERES']:,.0f}", delta="Objetivo" if tipo_calculo=="Total Haberes" else None)
+            
+            # --- MODIFICACIÓN: LÓGICA DINÁMICA ---
+            if tipo_calculo == "Sueldo Líquido":
+                    # Si el usuario ingresó Líquido, mostramos el Bruto calculado
+                m1.metric("Sueldo Bruto", f"${res['Sueldo bruto']:,.0f}", delta="Calculado")
+            else:
+                    # Si ingresó Bruto o Total Haberes, mostramos el Líquido resultante
+                m1.metric("Sueldo Líquido", f"${res['SUELDO LÍQUIDO']:,.0f}", delta="Resultado")
+            
+    
+
+            m2.metric("Tot. Haberes", f"${res['TOTAL HABERES']:,.0f}", delta="Objetivo" if tipo_calculo=="Total Haberes" else None)
+            m3.metric("Costo Empresa Supplynet", f"${res['COSTO FINANCIERO TOTAL sin ind']:,.0f}")
             m4.metric("Costo Total", f"${res['COSTO FINANCIERO TOTAL']:,.0f}")
             
             st.divider()
+            
             
             items_ordenados = [
                 "Gratificación", "Total Imponible", "TOTAL HABERES",
@@ -265,7 +276,7 @@ with tabs[1]:
         m_tot1, m_tot2, m_tot3, m_tot4 = st.columns(4)
         m_tot1.metric("Trabajadores", len(res_nomina))
         m_tot2.metric("Total Líquido", f"${total_liquido:,.0f}")
-        m_tot3.metric("Costo (Sin Ind)", f"${total_costo_Empresa_sin:,.0f}")
+        m_tot3.metric("Costo Empresa Supplynet", f"${total_costo_Empresa_sin:,.0f}")
         m_tot4.metric("Costo Total", f"${total_costo_empresa:,.0f}")
 
         df_final = pd.DataFrame(res_nomina)
