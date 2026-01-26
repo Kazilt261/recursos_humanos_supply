@@ -131,16 +131,9 @@ with tabs[0]:
         with st.container(border=True):
             m1, m2, m3, m4 = st.columns(4)
             
-            # --- MODIFICACIÓN: LÓGICA DINÁMICA ---
-            if tipo_calculo == "Sueldo Líquido":
-                    # Si el usuario ingresó Líquido, mostramos el Bruto calculado
-                m1.metric("Sueldo Bruto", f"${res['Sueldo bruto']:,.0f}", delta="Calculado")
-            else:
-                    # Si ingresó Bruto o Total Haberes, mostramos el Líquido resultante
-                m1.metric("Sueldo Líquido", f"${res['SUELDO LÍQUIDO']:,.0f}", delta="Resultado")
             
     
-
+            m1.metric("Sueldo Líquido", f"${res['SUELDO LÍQUIDO']:,.0f}", delta="Resultado")
             m2.metric("Tot. Haberes", f"${res['TOTAL HABERES']:,.0f}", delta="Objetivo" if tipo_calculo=="Total Haberes" else None)
             m3.metric("Costo Empresa Supplynet", f"${res['COSTO FINANCIERO TOTAL sin ind']:,.0f}")
             m4.metric("Costo Total", f"${res['COSTO FINANCIERO TOTAL']:,.0f}")
@@ -149,7 +142,7 @@ with tabs[0]:
             
             
             items_ordenados = [
-                "Gratificación", "Total Imponible", "TOTAL HABERES",
+                "Sueldo bruto","Gratificación", "Total Imponible", "TOTAL HABERES",
                 "AFP", "Salud Total", "Seguro Cesantía", "Impuesto Único",
                 "Total Descuentos", "-----------------",
                 "Ley SANNA", "Mutual", "SIS", "Seguro Cesantía (Empresa)",
