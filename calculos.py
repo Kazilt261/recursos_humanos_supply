@@ -135,13 +135,14 @@ class CalculadoraCostos:
         
         return {
             "Sueldo bruto": int(sueldo_base),
+            "Colación": colacion,            
+            "Movilización": movilizacion,
             "Gratificación": val_grati,
             "Total Imponible": total_imponible,
             "TOTAL HABERES": total_haberes,
             "AFP": monto_afp,
             "Salud Total": salud_total,
-            "Seguro Cesantía trab": seg_ces_trab,
-            "Seguro Cesantía emp":seg_ces_emp,
+            "Seguro Cesantía(Trabajador)": seg_ces_trab,
             "Impuesto Único": imp_unico,
             "Total Descuentos": total_desc,
             "SUELDO LÍQUIDO": sueldo_liq,
@@ -156,8 +157,8 @@ class CalculadoraCostos:
             "Costo financiero": costo_serv2,
             "Costo Admin": val_admin,
             "Costo Mgmt": mgmt_input,
-            "COSTO FINANCIERO TOTAL sin ind": costo_fin,
-            "COSTO FINANCIERO TOTAL": costo_fin2
+            "Costo Empresa Supplynet": costo_fin,
+            "Costo Total(IAS)": costo_fin2
         }
 
     # === AQUI ESTA EL CAMBIO IMPORTANTE ===

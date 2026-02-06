@@ -130,27 +130,27 @@ with tabs[0]:
         st.subheader("Resultado")
         with st.container(border=True):
             m1, m2, m3, m4 = st.columns(4)
-            
+        
             
     
             m1.metric("Sueldo Líquido", f"${res['SUELDO LÍQUIDO']:,.0f}", delta="Resultado")
             m2.metric("Tot. Haberes", f"${res['TOTAL HABERES']:,.0f}", delta="Objetivo" if tipo_calculo=="Total Haberes" else None)
-            m3.metric("Costo Empresa Supplynet", f"${res['COSTO FINANCIERO TOTAL sin ind']:,.0f}")
-            m4.metric("Costo Total", f"${res['COSTO FINANCIERO TOTAL']:,.0f}")
+            m3.metric("Costo Empresa Supplynet", f"${res['Costo Empresa Supplynet']:,.0f}")
+            m4.metric("Costo Total(IAS)", f"${res['Costo Total(IAS)']:,.0f}")
             
             st.divider()
             
             
             items_ordenados = [
-                "Sueldo bruto","Gratificación", "Total Imponible", "TOTAL HABERES",
-                "AFP", "Salud Total", "Seguro Cesantía", "Impuesto Único",
+                "Sueldo bruto","Colación","Movilización","Gratificación", "Total Imponible", "TOTAL HABERES",
+                "AFP", "Salud Total", "Seguro Cesantía(Trabajador)", "Impuesto Único",
                 "Total Descuentos", "-----------------",
                 "Ley SANNA", "Mutual", "SIS", "Seguro Cesantía (Empresa)",
                 "-----------------",
                 "Provisión Vacaciones", "Provisión Indemnización", 
                 "Provisión Bono Anual", "Seguro Salud (1 UF)",
                 "-----------------",
-                "COSTO FINANCIERO SERVICIO sin ind","Costo financiero", "Costo Admin", "Costo Mgmt"
+                "Costo Admin", "Costo Mgmt","Costo Empresa Supplynet","Costo Total(IAS)"
             ]
             rows = []
             for k in items_ordenados:
@@ -275,13 +275,16 @@ with tabs[1]:
         df_final = pd.DataFrame(res_nomina)
         
         cols_orden = [
-            "Rol","Nombre", "Tipo Contrato", "Sueldo bruto", "Gratificación", "Bonos Imp.", "Colación", "Movilización", "TOTAL HABERES",
-            "AFP", "Salud Total", "Impuesto Único", "SUELDO LÍQUIDO","Aporte Patronal Total","aporte adicional",
-            "SIS", "Mutual", "Ley SANNA", "Seguro Cesantía trab","Seguro Cesantía emp", 
-            "Provisión Vacaciones", "Provisión Indemnización", "Provisión Bono Anual",
-            ""
-            "COSTO FINANCIERO SERVICIO sin ind","Costo financiero", "Costo Admin", "Costo Mgmt", "COSTO FINANCIERO TOTAL"
-        ]
+                "Rol","Nombre", "Tipo Contrato", "Sueldo bruto","Colación","Movilización","Gratificación", "Total Imponible", "TOTAL HABERES",
+                "AFP", "Salud Total", "Seguro Cesantía(Trabajador)", "Impuesto Único",
+                "Total Descuentos", "-----------------",
+                "Ley SANNA", "Mutual", "SIS", "Seguro Cesantía (Empresa)",
+                "-----------------",
+                "Provisión Vacaciones", "Provisión Indemnización",
+                "Provisión Bono Anual", "Seguro Salud (1 UF)",
+                "-----------------",
+                "Costo Admin", "Costo Mgmt","Costo Empresa Supplynet","Costo Total(IAS)"
+        ]    
         
         cols_existentes = [c for c in cols_orden if c in df_final.columns]
         df_final = df_final[cols_existentes]
