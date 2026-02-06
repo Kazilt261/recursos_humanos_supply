@@ -160,7 +160,7 @@ with tabs[0]:
             st.dataframe(pd.DataFrame(rows).style.format({"Monto": "${:,.0f}"}), use_container_width=True, height=400, hide_index=True)
 
         if st.button("💾 Guardar Escenario"):
-            st.session_state.escenarios.append({"ID": len(st.session_state.escenarios)+1, "Hora": datetime.now().strftime("%H:%M"), "Monto": target, "Tipo": tipo_calculo, "Líquido": res["SUELDO LÍQUIDO"], "Total Costo": res["COSTO FINANCIERO TOTAL"], "full_res": res})
+            st.session_state.escenarios.append({"ID": len(st.session_state.escenarios)+1, "Hora": datetime.now().strftime("%H:%M"), "Monto": target, "Tipo": tipo_calculo, "Líquido": res["SUELDO LÍQUIDO"], "Total Costo": res["Costo Total(IAS)"], "full_res": res})
             st.toast("Guardado")
 
 # --- TAB 2: NÓMINA MASIVA ---
@@ -257,9 +257,9 @@ with tabs[1]:
                     **r
                 }
                 res_nomina.append(fila)
-                total_costo_empresa += r['COSTO FINANCIERO TOTAL']
+                total_costo_empresa += r['Costo Total(IAS)']
                 total_liquido += r['SUELDO LÍQUIDO']
-                total_costo_Empresa_sin += r['COSTO FINANCIERO TOTAL sin ind']
+                total_costo_Empresa_sin += r['Costo Empresa Supplynet']
 
             progress_bar.progress((index + 1) / total_rows)
 
