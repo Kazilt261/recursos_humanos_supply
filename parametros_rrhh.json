@@ -1,13 +1,13 @@
 {
-    "mes_referencia": "2025-12",
+    "mes_referencia": "2026-08",
     "indicadores": {
-        "UF": 39693.42,
-        "UTM": 69542
+        "UF": 40865.87,
+        "UTM": 71649
     },
     "parametros": {
-        "sueldo_minimo": 529000.0,
-        "factor_tope_afp": 87.8,
-        "factor_tope_cesantia": 131.9,
+        "sueldo_minimo": 553553.0,
+        "factor_tope_afp": 90.0,
+        "factor_tope_cesantia": 135.2,
         "factor_gratificacion_legal": 4.75,
         "tasa_sis": 1.49,
         "sanna": 0.03,

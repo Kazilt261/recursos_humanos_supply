@@ -12,12 +12,22 @@ class GestorParametros:
             "mes_referencia": "",
             "indicadores": {"UF": 36679.00, "UTM": 69542.00},
             "parametros": {
-                "sueldo_minimo": 500000, "factor_tope_afp": 84.3, "factor_tope_cesantia": 126.6,
-                "factor_gratificacion_legal": 4.75, "tasa_sis": 1.44, "sanna": 0.03,
-                "mutual": 0.9, "tasa_expectativa_vida": 0.0
+                "sueldo_minimo":553553.0, "factor_tope_afp": 90.0, "factor_tope_cesantia": 135.2,
+                "factor_gratificacion_legal": 4.75, "tasa_sis": 1.49, "sanna": 0.03,
+                "mutual": 0.9, "tasa_expectativa_vida": 0.9
             }
         }
         self.datos = self.cargar_datos()
+        self._actualizar_indicadores_silencioso() # Llamada automática al inicio
+
+    def _actualizar_indicadores_silencioso(self):
+        # Actualiza sin mostrar mensajes. Si falla, se queda con los del JSON.
+        try:
+            resp = requests.get(self.api_url, timeout=3).json()
+            self.datos["indicadores"]["UF"] = resp['uf']['valor']
+            self.datos["indicadores"]["UTM"] = resp['utm']['valor']
+        except:
+            pass
 
     def cargar_datos(self):
         if os.path.exists(self.archivo_db):
@@ -30,6 +40,7 @@ class GestorParametros:
         with open(self.archivo_db, 'w') as f: json.dump(self.datos, f, indent=4)
 
     def obtener_indicadores_online(self):
+        # Esta es la que usa el botón, se queda igual
         try:
             resp = requests.get(self.api_url, timeout=5).json()
             self.datos["indicadores"]["UF"] = resp['uf']['valor']
@@ -78,7 +89,7 @@ class CalculadoraCostos:
 
     def calcular_costo_empresa(self, sueldo_base, es_indefinido, colacion, movilizacion, otros_no_imp,
                                bonos_imp, otros_imp, admin_input, admin_es_pct, mgmt_input, incluir_bono_anual,
-                               afp_tasa, salud_tasa, apv, isapre_uf):
+                               afp_tasa, salud_tasa, apv, isapre_uf, otros_costos=0):
         
         utm = self.params.obtener_utm(); uf = self.params.obtener_uf(); sueldo_min = self.params.obtener_valor("sueldo_minimo")
         tope_afp_uf = self.params.obtener_valor("factor_tope_afp"); tope_ces_uf = self.params.obtener_valor("factor_tope_cesantia")
@@ -106,7 +117,7 @@ class CalculadoraCostos:
         base_trib = self.Base_tributable(seg_ces_trab, monto_afp, salud_legal, adic_salud, total_imponible, uf, tope_afp_uf)
         imp_unico = self.formula_impuesto_unico(base_trib, utm)
         total_desc = seg_ces_trab + monto_afp + salud_total + imp_unico
-        sueldo_liq = total_haberes - total_desc
+        sueldo_liq = self.round(total_haberes - total_desc)
 
         base_ces = min(total_imponible, tope_ces_uf * uf)
         seg_ces_emp = self.formula_seguro_cesantia(tasa_emp_ces, base_ces)
@@ -130,8 +141,8 @@ class CalculadoraCostos:
         
         val_admin = self.round(costo_serv * (admin_input/100)) if admin_es_pct else admin_input
         
-        costo_fin = costo_serv + val_admin + mgmt_input
-        costo_fin2 = costo_serv2 + val_admin + mgmt_input
+        costo_fin = costo_serv + val_admin + mgmt_input + otros_costos
+        costo_fin2 = costo_serv2 + val_admin + mgmt_input + otros_costos
         
         return {
             "Sueldo bruto": int(sueldo_base),
@@ -157,17 +168,14 @@ class CalculadoraCostos:
             "Costo financiero": costo_serv2,
             "Costo Admin": val_admin,
             "Costo Mgmt": mgmt_input,
+            "Otros Costos": otros_costos,
             "Costo Empresa Supplynet": costo_fin,
             "Costo Total(IAS)": costo_fin2
         }
 
-    # === AQUI ESTA EL CAMBIO IMPORTANTE ===
     def encontrar_sueldo_base_iterativo(self, valor_objetivo, es_indefinido, colacion, movilizacion, otros_no_imp,
                                bonos_imp, otros_imp, admin_input, admin_es_pct, mgmt_input, incluir_bono_anual,
-                               afp_tasa, salud_tasa, apv, isapre_uf, campo_objetivo="SUELDO LÍQUIDO"):
-        
-        # valor_objetivo: Puede ser el Líquido deseado O el Total Haberes deseado
-        # campo_objetivo: "SUELDO LÍQUIDO" o "TOTAL HABERES"
+                               afp_tasa, salud_tasa, apv, isapre_uf, otros_costos=0, campo_objetivo="SUELDO LÍQUIDO"):
         
         bajo, alto = 0, int(valor_objetivo * 2.5); candidato = 0
         
@@ -176,17 +184,14 @@ class CalculadoraCostos:
             medio = (bajo + alto) // 2
             if medio < 0: medio = 0
             
-            # Calculamos con el sueldo base "medio"
             res = self.calcular_costo_empresa(medio, es_indefinido, colacion, movilizacion, otros_no_imp,
                                bonos_imp, otros_imp, admin_input, admin_es_pct, mgmt_input, incluir_bono_anual,
-                               afp_tasa, salud_tasa, apv, isapre_uf)
+                               afp_tasa, salud_tasa, apv, isapre_uf, otros_costos)
             
-            # Obtenemos el valor calculado según el objetivo (Líquido o Haberes)
             valor_calculado = res[campo_objetivo]
             
             if valor_calculado == valor_objetivo: return res
             
-            # Ajustamos la búsqueda
             if valor_calculado < valor_objetivo: bajo = medio + 1
             else: alto = medio - 1
             candidato = medio
@@ -198,7 +203,7 @@ class CalculadoraCostos:
         for base in rango_busqueda:
             res = self.calcular_costo_empresa(base, es_indefinido, colacion, movilizacion, otros_no_imp,
                                bonos_imp, otros_imp, admin_input, admin_es_pct, mgmt_input, incluir_bono_anual,
-                               afp_tasa, salud_tasa, apv, isapre_uf)
+                               afp_tasa, salud_tasa, apv, isapre_uf, otros_costos)
             
             valor_calculado = res[campo_objetivo]
             dif = abs(valor_calculado - valor_objetivo)
