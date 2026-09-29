@@ -2,6 +2,7 @@ import json
 import os
 import requests
 import pandas as pd
+import datetime
 from utils import redondear_excel
 
 class GestorParametros:
@@ -13,19 +14,26 @@ class GestorParametros:
             "indicadores": {"UF": 36679.00, "UTM": 69542.00},
             "parametros": {
                 "sueldo_minimo":553553.0, "factor_tope_afp": 90.0, "factor_tope_cesantia": 135.2,
-                "factor_gratificacion_legal": 4.75, "tasa_sis": 1.49, "sanna": 0.03,
+                "factor_gratificacion_legal": 4.75, "tasa_sis": 1.78, "sanna": 0.03,
                 "mutual": 0.9, "tasa_expectativa_vida": 0.9
             }
         }
         self.datos = self.cargar_datos()
-        self._actualizar_indicadores_silencioso() # Llamada automática al inicio
+        self._actualizar_indicadores_silencioso()
 
     def _actualizar_indicadores_silencioso(self):
-        # Actualiza sin mostrar mensajes. Si falla, se queda con los del JSON.
         try:
-            resp = requests.get(self.api_url, timeout=3).json()
-            self.datos["indicadores"]["UF"] = resp['uf']['valor']
-            self.datos["indicadores"]["UTM"] = resp['utm']['valor']
+            hoy = datetime.date.today()
+            fecha_inicio_mes = f"01-{hoy.strftime('%m-%Y')}"
+            
+            resp_uf = requests.get(f"{self.api_url}/uf/{fecha_inicio_mes}", timeout=3).json()
+            resp_utm = requests.get(f"{self.api_url}/utm/{fecha_inicio_mes}", timeout=3).json()
+            
+            if resp_uf.get("serie") and len(resp_uf["serie"]) > 0:
+                self.datos["indicadores"]["UF"] = resp_uf["serie"][0]["valor"]
+                
+            if resp_utm.get("serie") and len(resp_utm["serie"]) > 0:
+                self.datos["indicadores"]["UTM"] = resp_utm["serie"][0]["valor"]
         except:
             pass
 
@@ -40,13 +48,20 @@ class GestorParametros:
         with open(self.archivo_db, 'w') as f: json.dump(self.datos, f, indent=4)
 
     def obtener_indicadores_online(self):
-        # Esta es la que usa el botón, se queda igual
         try:
-            resp = requests.get(self.api_url, timeout=5).json()
-            self.datos["indicadores"]["UF"] = resp['uf']['valor']
-            self.datos["indicadores"]["UTM"] = resp['utm']['valor']
+            hoy = datetime.date.today()
+            fecha_inicio_mes = f"01-{hoy.strftime('%m-%Y')}"
+            
+            resp_uf = requests.get(f"{self.api_url}/uf/{fecha_inicio_mes}", timeout=5).json()
+            resp_utm = requests.get(f"{self.api_url}/utm/{fecha_inicio_mes}", timeout=5).json()
+            
+            if resp_uf.get("serie") and len(resp_uf["serie"]) > 0:
+                self.datos["indicadores"]["UF"] = resp_uf["serie"][0]["valor"]
+            if resp_utm.get("serie") and len(resp_utm["serie"]) > 0:
+                self.datos["indicadores"]["UTM"] = resp_utm["serie"][0]["valor"]
+                
             self.guardar_cambios()
-            return True, "Indicadores actualizados"
+            return True, f"Indicadores actualizados al {fecha_inicio_mes}"
         except Exception as e:
             return False, f"Error: {e}"
 
@@ -61,7 +76,6 @@ class CalculadoraCostos:
 
     def round(self, valor, decimales=0): return redondear_excel(valor, decimales)
     
-    # Fórmulas básicas
     def formula_gratificacion(self, sb, tope, b, o): return self.round(min((b+sb+o) * 0.25, tope))
     def formula_base_imponible(self, tot, uf, tope): return self.round(min(tot, tope * uf))
     def Formula_haberes(self, sb, grat, bon, otr): return sb + grat + bon + otr
@@ -77,21 +91,25 @@ class CalculadoraCostos:
     def Aporte_patronal(self, san, mut, sis, ces): return san + mut + sis + ces
 
     def formula_impuesto_unico(self, base, utm):
+        base = self.round(base, 0)
         if base <= 0: return 0
         if base <= (13.5 * utm): return 0
-        elif base <= (30 * utm): return self.round((base * 0.04) - (0.54 * utm), 3)
-        elif base <= (50 * utm): return self.round((base * 0.08) - (1.74 * utm), 3)
-        elif base <= (70 * utm): return self.round((base * 0.135) - (4.49 * utm), 3)
-        elif base <= (90 * utm): return self.round((base * 0.23) - (11.14 * utm), 3)
-        elif base <= (120 * utm): return self.round((base * 0.304) - (17.80 * utm), 3)
-        elif base <= (310 * utm): return self.round((base * 0.35) - (23.32 * utm), 3)
-        else: return self.round((base * 0.40) - (38.82 * utm), 3)
+        elif base <= (30 * utm): return self.round((base * 0.04) - self.round(0.54 * utm, 2), 0)
+        elif base <= (50 * utm): return self.round((base * 0.08) - self.round(1.74 * utm, 2), 0)
+        elif base <= (70 * utm): return self.round((base * 0.135) - self.round(4.49 * utm, 2), 0)
+        elif base <= (90 * utm): return self.round((base * 0.23) - self.round(11.14 * utm, 2), 0)
+        elif base <= (120 * utm): return self.round((base * 0.304) - self.round(17.80 * utm, 2), 0)
+        elif base <= (310 * utm): return self.round((base * 0.35) - self.round(23.32 * utm, 2), 0)
+        else: return self.round((base * 0.40) - self.round(38.82 * utm, 2), 0)
 
     def calcular_costo_empresa(self, sueldo_base, es_indefinido, colacion, movilizacion, otros_no_imp,
                                bonos_imp, otros_imp, admin_input, admin_es_pct, mgmt_input, incluir_bono_anual,
                                afp_tasa, salud_tasa, apv, isapre_uf, otros_costos=0):
         
-        utm = self.params.obtener_utm(); uf = self.params.obtener_uf(); sueldo_min = self.params.obtener_valor("sueldo_minimo")
+        utm = self.params.obtener_utm()
+        uf = self.params.obtener_uf()
+        
+        sueldo_min = self.params.obtener_valor("sueldo_minimo")
         tope_afp_uf = self.params.obtener_valor("factor_tope_afp"); tope_ces_uf = self.params.obtener_valor("factor_tope_cesantia")
         factor_grati = self.params.obtener_valor("factor_gratificacion_legal")
         
@@ -104,8 +122,12 @@ class CalculadoraCostos:
         
         base_imponible_topada = self.formula_base_imponible(total_imponible, uf, tope_afp_uf)
         
-        if es_indefinido: tasa_trab_ces = 0.006; tasa_emp_ces = 0.03
-        else: tasa_trab_ces = 0.0; tasa_emp_ces = 0.024
+        if es_indefinido: 
+            tasa_trab_ces = 0.006
+            tasa_emp_ces = 0.024
+        else: 
+            tasa_trab_ces = 0.0
+            tasa_emp_ces = 0.03
         
         seg_ces_trab = self.formula_seg_cesatia(total_imponible,tasa_trab_ces,tope_ces_uf,uf)
         monto_afp = self.formula_afp(base_imponible_topada, afp_tasa, apv)
@@ -115,7 +137,9 @@ class CalculadoraCostos:
         adic_salud = self.formula_adicional_salud(salud_total, salud_legal)
         
         base_trib = self.Base_tributable(seg_ces_trab, monto_afp, salud_legal, adic_salud, total_imponible, uf, tope_afp_uf)
+        
         imp_unico = self.formula_impuesto_unico(base_trib, utm)
+        
         total_desc = seg_ces_trab + monto_afp + salud_total + imp_unico
         sueldo_liq = self.round(total_haberes - total_desc)
 
@@ -127,16 +151,14 @@ class CalculadoraCostos:
         aporte_pat = self.Aporte_patronal(c_san, c_mut, c_sis, seg_ces_emp)
         
         base_tope_calc = min(base_imponible_topada, uf * tope_afp_uf)
-        aporte_adic = (0.1/100)*base_tope_calc + (0.9/100)*base_tope_calc # Aporte adicional
+        aporte_adic = (0.1/100)*base_tope_calc + (0.9/100)*base_tope_calc
         
         prov_vac = ((sueldo_base + colacion + movilizacion + otros_no_imp)/30)*1.75
         prov_ind = total_haberes/12
-        seg_sal = uf
+        seg_sal = self.round(uf * 1.41)
         prov_bono = self.round((colacion + val_grati + sueldo_base)*0.05) if incluir_bono_anual else 0
 
-        # COSTO 1: Sin Indemnización
         costo_serv = total_haberes + aporte_pat + aporte_adic + prov_bono + prov_vac + seg_sal
-        # COSTO 2: Con Indemnización
         costo_serv2 = total_haberes + aporte_pat + aporte_adic + prov_bono + prov_vac + prov_ind + seg_sal
         
         val_admin = self.round(costo_serv * (admin_input/100)) if admin_es_pct else admin_input
@@ -163,7 +185,7 @@ class CalculadoraCostos:
             "Provisión Vacaciones": prov_vac,
             "Provisión Indemnización": prov_ind,
             "Provisión Bono Anual": prov_bono,
-            "Seguro Salud (1 UF)": seg_sal,
+            "Seguro Salud (1.41 UF)": seg_sal,
             "COSTO FINANCIERO SERVICIO sin ind": costo_serv,
             "Costo financiero": costo_serv2,
             "Costo Admin": val_admin,
@@ -179,7 +201,6 @@ class CalculadoraCostos:
         
         bajo, alto = 0, int(valor_objetivo * 2.5); candidato = 0
         
-        # 1. Búsqueda Binaria (Aproximación rápida)
         for _ in range(50):
             medio = (bajo + alto) // 2
             if medio < 0: medio = 0
@@ -196,7 +217,6 @@ class CalculadoraCostos:
             else: alto = medio - 1
             candidato = medio
         
-        # 2. Ajuste Fino (Paso a paso para precisión exacta)
         mejor_res = None; menor_dif = float('inf')
         rango_busqueda = range(max(0, candidato - 2000), candidato + 2000)
         
