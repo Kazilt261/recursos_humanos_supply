@@ -59,12 +59,12 @@ if 'nomina_df' not in st.session_state:
         {
             "Rol": "Gerente", "Cantidad": 1, 
             "Sueldo bruto (Input)": 0, "Total Haberes (Input)": 0, "Sueldo Líquido (Input)": 2500000, 
-            "Contrato": "Indefinido", "Bono": 0, "Colación": 100000, "Movilización": 0, "Otros Costos (Input)": 0
+            "Contrato": "Indefinido", "Bono": 0, "Colación": 100000, "Movilización": 0
         },
         {
             "Rol": "Chofer", "Cantidad": 10, 
             "Sueldo bruto (Input)": 0, "Total Haberes (Input)": 0, "Sueldo Líquido (Input)": 900000, 
-            "Contrato": "Indefinido", "Bono": 0, "Colación": 100000, "Movilización": 0, "Otros Costos (Input)": 0
+            "Contrato": "Indefinido", "Bono": 0, "Colación": 100000, "Movilización": 0
         }
     ])
 
@@ -97,57 +97,56 @@ with tabs[0]:
         with st.container(border=True):
             c1, c2 = st.columns(2)
             col_in = c1.number_input("Colación", value=100000); mov_in = c2.number_input("Movilización", value=0)
-            use_admin_pct = st.toggle("Admin %", True)
-            adm_in = st.number_input("Admin", 4.0); 
-            oc_in = st.number_input("Otros Costos Empresa ($)", 0)
-            check_bono = st.checkbox("Prov. Bono Anual", True)
+            bon_in = st.number_input("Bonos Imp.", value=0); oni_in = st.number_input("Otros No Imp.", value=0)
         
         with st.expander("Parámetros Avanzados"):
             c3, c4 = st.columns(2)
             afp_in = c3.number_input("AFP %", 11.45); sal_in = c4.number_input("Salud %", 7.0)
             isa_in = st.number_input("Isapre (UF)", 0.0); apv_in = st.number_input("APV ($)", 0)
             st.divider()
-            mgt_in = st.number_input("Mgmt", 0)
-            bon_in = st.number_input("Bonos Imp.", value=0); oni_in = st.number_input("Otros No Imp.", value=0)
+            use_admin_pct = st.toggle("Admin %", False)
+            adm_in = st.number_input("Admin", 0.0); mgt_in = st.number_input("Mgmt", 0)
+            check_bono = st.checkbox("Prov. Bono Anual", True)
 
     if tipo_calculo == "Sueldo Líquido":
         res = calc.encontrar_sueldo_base_iterativo(
             target, es_indef, col_in, mov_in, oni_in, bon_in, 0, adm_in, use_admin_pct, mgt_in, 
-            check_bono, afp_in, sal_in, apv_in, isa_in, otros_costos=oc_in, campo_objetivo="SUELDO LÍQUIDO"
+            check_bono, afp_in, sal_in, apv_in, isa_in, 
+            campo_objetivo="SUELDO LÍQUIDO"
         )
     elif tipo_calculo == "Total Haberes":
         res = calc.encontrar_sueldo_base_iterativo(
             target, es_indef, col_in, mov_in, oni_in, bon_in, 0, adm_in, use_admin_pct, mgt_in, 
-            check_bono, afp_in, sal_in, apv_in, isa_in, otros_costos=oc_in, campo_objetivo="TOTAL HABERES"
+            check_bono, afp_in, sal_in, apv_in, isa_in, 
+            campo_objetivo="TOTAL HABERES"
         )
     else: # Sueldo Bruto
         res = calc.calcular_costo_empresa(
             target, es_indef, col_in, mov_in, oni_in, bon_in, 0, adm_in, use_admin_pct, mgt_in, 
-            check_bono, afp_in, sal_in, apv_in, isa_in, otros_costos=oc_in
+            check_bono, afp_in, sal_in, apv_in, isa_in
         )
 
     with c_results:
         st.subheader("Resultado")
         with st.container(border=True):
             m1, m2, m3, m4 = st.columns(4)
-        
-            m1.metric("Sueldo Líquido", f"${res['SUELDO LÍQUIDO']:,.0f}", delta="Resultado")
-            m2.metric("Tot. Haberes", f"${res['TOTAL HABERES']:,.0f}", delta="Objetivo" if tipo_calculo=="Total Haberes" else None)
-            m3.metric("Costo Empresa Supplynet", f"${res['Costo Empresa Supplynet']:,.0f}")
-            m4.metric("Costo Total(IAS)", f"${res['Costo Total(IAS)']:,.0f}")
+            m1.metric("Bruto", f"${res['Sueldo bruto']:,.0f}")
+            m2.metric("Líquido", f"${res['SUELDO LÍQUIDO']:,.0f}", delta="Objetivo" if tipo_calculo=="Sueldo Líquido" else None)
+            m3.metric("Tot. Haberes", f"${res['TOTAL HABERES']:,.0f}", delta="Objetivo" if tipo_calculo=="Total Haberes" else None)
+            m4.metric("Costo Total", f"${res['COSTO FINANCIERO TOTAL']:,.0f}")
             
             st.divider()
             
             items_ordenados = [
-                "Sueldo bruto","Colación","Movilización","Gratificación", "Total Imponible", "TOTAL HABERES",
-                "AFP", "Salud Total", "Seguro Cesantía(Trabajador)", "Impuesto Único",
-                "Total Descuentos","Sueldo Líquido","-----------------",
+                "Gratificación", "Total Imponible", "TOTAL HABERES",
+                "AFP", "Salud Total", "Seguro Cesantía", "Impuesto Único",
+                "Total Descuentos", "Renta líquida" ,"-----------------",
                 "Ley SANNA", "Mutual", "SIS", "Seguro Cesantía (Empresa)",
                 "-----------------",
                 "Provisión Vacaciones", "Provisión Indemnización", 
-                "Provisión Bono Anual", "Seguro Salud (1 UF)",
+                "Provisión Bono Anual", "Seguro Salud (1.41 UF)",
                 "-----------------",
-                "Costo Admin", "Costo Mgmt", "Otros Costos", "Costo Empresa Supplynet","Costo Total(IAS)"
+                "COSTO FINANCIERO SERVICIO sin ind","Costo financiero", "Costo Admin", "Costo Mgmt"
             ]
             rows = []
             for k in items_ordenados:
@@ -157,7 +156,7 @@ with tabs[0]:
             st.dataframe(pd.DataFrame(rows).style.format({"Monto": "${:,.0f}"}), use_container_width=True, height=400, hide_index=True)
 
         if st.button("💾 Guardar Escenario"):
-            st.session_state.escenarios.append({"ID": len(st.session_state.escenarios)+1, "Hora": datetime.now().strftime("%H:%M"), "Monto": target, "Tipo": tipo_calculo, "Líquido": res["SUELDO LÍQUIDO"], "Total Costo": res["Costo Total(IAS)"], "full_res": res})
+            st.session_state.escenarios.append({"ID": len(st.session_state.escenarios)+1, "Hora": datetime.now().strftime("%H:%M"), "Monto": target, "Tipo": tipo_calculo, "Líquido": res["SUELDO LÍQUIDO"], "Total Costo": res["COSTO FINANCIERO TOTAL"], "full_res": res})
             st.toast("Guardado")
 
 # --- TAB 2: NÓMINA MASIVA ---
@@ -184,8 +183,7 @@ with tabs[1]:
                     "Sueldo bruto (Input)": bruto, 
                     "Total Haberes (Input)": haberes, 
                     "Sueldo Líquido (Input)": liquido, 
-                    "Contrato": "Indefinido", "Bono": 0, "Colación": 100000, "Movilización": 0,
-                    "Otros Costos (Input)": 0
+                    "Contrato": "Indefinido", "Bono": 0, "Colación": 100000, "Movilización": 0
                 })
             st.session_state.nomina_df = pd.DataFrame(data)
             st.rerun()
@@ -207,15 +205,13 @@ with tabs[1]:
         step_admin_g = 0.5 if g_use_admin_pct else 1000.0
         
         g_admin = c_gl4.number_input(label_admin_g, value=0.0, step=step_admin_g)
-        
         g_mgmt = 0 
 
     edited_df = st.data_editor(st.session_state.nomina_df, num_rows="dynamic", use_container_width=True,
         column_config={
             "Sueldo bruto (Input)": st.column_config.NumberColumn("Sueldo bruto (Input)", format="$%d"),
             "Total Haberes (Input)": st.column_config.NumberColumn("Total Haberes (Input)", format="$%d"),
-            "Sueldo Líquido (Input)": st.column_config.NumberColumn("Sueldo Líquido (Input)", format="$%d"),
-            "Otros Costos (Input)": st.column_config.NumberColumn("Otros Costos", format="$%d")
+            "Sueldo Líquido (Input)": st.column_config.NumberColumn("Sueldo Líquido (Input)", format="$%d")
         }
     )
 
@@ -234,14 +230,13 @@ with tabs[1]:
             base_in = row.get('Sueldo bruto (Input)', 0) 
             haberes_in = row.get('Total Haberes (Input)', 0) 
             liq_in = row.get('Sueldo Líquido (Input)', 0)
-            oc_nomina = row.get('Otros Costos (Input)', 0)
             
             if base_in > 0:
-                r = calc.calcular_costo_empresa(base_in, row['Contrato']=="Indefinido", row.get('Colación',0), row.get('Movilización',0), 0, row.get('Bono',0), 0, g_admin, g_use_admin_pct, 0, g_bono_anual, g_afp, g_salud, 0, 0, otros_costos=oc_nomina)
+                r = calc.calcular_costo_empresa(base_in, row['Contrato']=="Indefinido", row.get('Colación',0), row.get('Movilización',0), 0, row.get('Bono',0), 0, g_admin, g_use_admin_pct, 0, g_bono_anual, g_afp, g_salud, 0, 0)
             elif haberes_in > 0:
-                r = calc.encontrar_sueldo_base_iterativo(haberes_in, row['Contrato']=="Indefinido", row.get('Colación',0), row.get('Movilización',0), 0, row.get('Bono',0), 0, g_admin, g_use_admin_pct, 0, g_bono_anual, g_afp, g_salud, 0, 0, otros_costos=oc_nomina, campo_objetivo="TOTAL HABERES")
+                r = calc.encontrar_sueldo_base_iterativo(haberes_in, row['Contrato']=="Indefinido", row.get('Colación',0), row.get('Movilización',0), 0, row.get('Bono',0), 0, g_admin, g_use_admin_pct, 0, g_bono_anual, g_afp, g_salud, 0, 0, campo_objetivo="TOTAL HABERES")
             else:
-                r = calc.encontrar_sueldo_base_iterativo(liq_in, row['Contrato']=="Indefinido", row.get('Colación',0), row.get('Movilización',0), 0, row.get('Bono',0), 0, g_admin, g_use_admin_pct, 0, g_bono_anual, g_afp, g_salud, 0, 0, otros_costos=oc_nomina, campo_objetivo="SUELDO LÍQUIDO")
+                r = calc.encontrar_sueldo_base_iterativo(liq_in, row['Contrato']=="Indefinido", row.get('Colación',0), row.get('Movilización',0), 0, row.get('Bono',0), 0, g_admin, g_use_admin_pct, 0, g_bono_anual, g_afp, g_salud, 0, 0, campo_objetivo="SUELDO LÍQUIDO")
             
             for i in range(cant):
                 suffix = f" ({i+1})" if cant > 1 else ""
@@ -252,9 +247,9 @@ with tabs[1]:
                     **r
                 }
                 res_nomina.append(fila)
-                total_costo_empresa += r['Costo Total(IAS)']
+                total_costo_empresa += r['COSTO FINANCIERO TOTAL']
                 total_liquido += r['SUELDO LÍQUIDO']
-                total_costo_Empresa_sin += r['Costo Empresa Supplynet']
+                total_costo_Empresa_sin += r['COSTO FINANCIERO TOTAL sin ind']
 
             progress_bar.progress((index + 1) / total_rows)
 
@@ -264,22 +259,27 @@ with tabs[1]:
         m_tot1, m_tot2, m_tot3, m_tot4 = st.columns(4)
         m_tot1.metric("Trabajadores", len(res_nomina))
         m_tot2.metric("Total Líquido", f"${total_liquido:,.0f}")
-        m_tot3.metric("Costo Empresa Supplynet", f"${total_costo_Empresa_sin:,.0f}")
+        m_tot3.metric("Costo (Sin Ind)", f"${total_costo_Empresa_sin:,.0f}")
         m_tot4.metric("Costo Total", f"${total_costo_empresa:,.0f}")
 
         df_final = pd.DataFrame(res_nomina)
         
+        # INYECCIÓN DE INDICADORES EN EL EXCEL
+        df_final["UF Cálculo"] = gestor.obtener_uf()
+        df_final["UTM Cálculo (Impuesto)"] = gestor.obtener_utm_inicio_mes()
+        
         cols_orden = [
-                "Rol","Nombre", "Tipo Contrato", "Sueldo bruto","Colación","Movilización","Gratificación", "Total Imponible", "TOTAL HABERES",
-                "AFP", "Salud Total", "Seguro Cesantía(Trabajador)", "Impuesto Único",
-                "Total Descuentos","SUELDO LÍQUIDO" ,"-----------------",
-                "Ley SANNA", "Mutual", "SIS", "Seguro Cesantía (Empresa)",
-                "-----------------",
-                "Provisión Vacaciones", "Provisión Indemnización",
-                "Provisión Bono Anual", "Seguro Salud (1 UF)",
-                "-----------------",
-                "Costo Admin", "Costo Mgmt", "Otros Costos", "Costo Empresa Supplynet","Costo Total(IAS)"
-        ]    
+            "Rol", "Nombre", "Tipo Contrato", "Sueldo bruto", "Gratificación", "Bonos Imp.", 
+            "Total Imponible", "Colación", "Movilización", "TOTAL HABERES",
+            "AFP", "Salud Total", "Seguro Cesantía", "Impuesto Único", "Total Descuentos", 
+            "SUELDO LÍQUIDO", "Renta líquida",
+            "SIS", "Mutual", "Ley SANNA", "Seguro Cesantía (Empresa)", "Aporte Patronal Total",
+            "aporte adicional", "Provisión Vacaciones", "Provisión Indemnización", 
+            "Provisión Bono Anual", "Seguro Salud (1.41 UF)",
+            "COSTO FINANCIERO SERVICIO sin ind", "Costo financiero", "Costo Admin", "Costo Mgmt", 
+            "COSTO FINANCIERO TOTAL sin ind", "COSTO FINANCIERO TOTAL",
+            "UF Cálculo", "UTM Cálculo (Impuesto)"
+        ]
         
         cols_existentes = [c for c in cols_orden if c in df_final.columns]
         df_final = df_final[cols_existentes]
@@ -294,12 +294,9 @@ with tabs[2]:
     st.header("Análisis")
     if st.session_state.escenarios:
         df_hist = pd.DataFrame(st.session_state.escenarios)
-        
-        # Renombramos para el gráfico y la tabla
         df_grafico = df_hist.rename(columns={"Monto": "Monto Ingresado"})
         
         try:
-            # 1. GRÁFICO
             df_melted = df_grafico.melt(
                 id_vars=["ID"], 
                 value_vars=["Total Costo", "Líquido", "Monto Ingresado"], 
@@ -311,28 +308,14 @@ with tabs[2]:
             ).interactive()
             st.altair_chart(c, use_container_width=True)
             
-            # 2. PREPARACIÓN DE DATOS
             df_detalles = pd.json_normalize(df_hist['full_res'])
-            # Usamos df_grafico aquí para mantener el nombre "Monto Ingresado" en la exportación
-            df_base = df_grafico.drop(columns=['full_res', 'Líquido', 'Total Costo']).reset_index(drop=True)
+            df_base = df_hist.drop(columns=['full_res', 'Líquido', 'Total Costo']).reset_index(drop=True)
             df_export_completo = pd.concat([df_base, df_detalles], axis=1)
             
-            # 3. NUEVA TABLA COMPARATIVA EN PANTALLA
-            st.subheader("Comparativa de Escenarios")
-            cols_resumen = ["ID", "Tipo", "Monto Ingresado", "SUELDO LÍQUIDO", "TOTAL HABERES", "Costo Empresa Supplynet", "Costo Total(IAS)"]
-            cols_validas = [col for col in cols_resumen if col in df_export_completo.columns]
+            # INYECCIÓN DE INDICADORES EN EL EXCEL
+            df_export_completo["UF Cálculo"] = gestor.obtener_uf()
+            df_export_completo["UTM Cálculo (Impuesto)"] = gestor.obtener_utm_inicio_mes()
             
-            df_resumen = df_export_completo[cols_validas]
-            
-            st.dataframe(df_resumen.style.format({
-                "Monto Ingresado": "${:,.0f}",
-                "SUELDO LÍQUIDO": "${:,.0f}", 
-                "TOTAL HABERES": "${:,.0f}", 
-                "Costo Empresa Supplynet": "${:,.0f}", 
-                "Costo Total(IAS)": "${:,.0f}"
-            }), use_container_width=True, hide_index=True)
-            
-            # 4. EXPORTACIÓN A EXCEL
             excel_hist = generar_excel_estilizado(df_export_completo)
             
             st.download_button(
@@ -367,8 +350,28 @@ with tabs[3]:
         st.dataframe(calc.obtener_tabla_impuesto_visual(), hide_index=True, use_container_width=True)
 
     st.divider()
+    
+    # CARGA MASIVA DE PARÁMETROS DESDE EXCEL
+    st.subheader("📁 Carga Masiva de Parámetros (Para contenedores sin memoria)")
+    archivo_params = st.file_uploader("Sube un archivo Excel (.xlsx) con dos columnas: 'Parametro' y 'Valor'", type=["xlsx"])
+    if archivo_params:
+        try:
+            df_p = pd.read_excel(archivo_params)
+            for _, row in df_p.iterrows():
+                k = str(row.iloc[0]).strip()
+                v = row.iloc[1]
+                if k in gestor.datos["parametros"]:
+                    gestor.datos["parametros"][k] = float(v)
+            gestor.guardar_cambios()
+            st.success("¡Parámetros cargados y actualizados en memoria!")
+            time.sleep(1)
+            st.rerun()
+        except Exception as e:
+            st.error(f"Error al leer el archivo Excel: {e}")
 
-    st.subheader("📝 Parámetros Legales Editables")
+    st.divider()
+
+    st.subheader("📝 Edición Manual de Parámetros Legales")
     st.info("Modifica aquí los valores internos del cálculo. Recuerda guardar para aplicar los cambios.")
 
     params_actuales = gestor.datos["parametros"]
